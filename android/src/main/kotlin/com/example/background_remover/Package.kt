@@ -25,7 +25,6 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
 
 
 class Package: FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -63,15 +62,6 @@ class Package: FlutterPlugin, MethodCallHandler, ActivityAware {
 
   private fun teardown() {
     mChannel.setMethodCallHandler(null)
-  }
-
-  companion object {
-    @JvmStatic
-    fun registerWith(registrar: Registrar) {
-      val inst = Package()
-      inst.activity = registrar.activity()
-      inst.setupCallbackChannels(registrar.messenger())
-    }
   }
 
   override fun onMethodCall(call: MethodCall, result: Result) {
