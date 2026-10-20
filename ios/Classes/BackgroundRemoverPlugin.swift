@@ -3,6 +3,7 @@ import UIKit
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import Vision
+import CoreML
 
 public class BackgroundRemoverPlugin: NSObject, FlutterPlugin {
   private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
@@ -60,12 +61,14 @@ public class BackgroundRemoverPlugin: NSObject, FlutterPlugin {
 
     let inputCIImage = CIImage(cgImage: cgImage)
 
-    // Attempt iOS 17+ foreground instance mask first
+    #if !targetEnvironment(simulator)
+    // Attempt iOS 17+ foreground instance mask first on physical device
     if #available(iOS 17.0, *) {
       if let outputData = try? self.processWithForegroundInstanceMask(inputImage: inputCIImage) {
         return outputData
       }
     }
+    #endif
 
     // Fallback to iOS 15+ person segmentation
     if #available(iOS 15.0, *) {
@@ -101,7 +104,20 @@ public class BackgroundRemoverPlugin: NSObject, FlutterPlugin {
   @available(iOS 15.0, *)
   private func processWithPersonSegmentation(inputImage: CIImage) throws -> Data {
     let request = VNGeneratePersonSegmentationRequest()
+    #if targetEnvironment(simulator)
+    request.qualityLevel = .balanced
+    if #available(iOS 17.0, *) {
+      let devices = MLComputeDevice.allComputeDevices
+      if let cpuDevice = devices.first(where: { "\($0)".contains("CPU") }) {
+        request.setComputeDevice(cpuDevice, for: .main)
+      }
+    } else {
+      request.usesCPUOnly = true
+    }
+    #else
     request.qualityLevel = .accurate
+    #endif
+
     request.outputPixelFormat = kCVPixelFormatType_OneComponent8
 
     let handler = VNImageRequestHandler(ciImage: inputImage, options: [:])
