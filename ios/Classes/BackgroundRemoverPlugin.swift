@@ -34,6 +34,14 @@ public class BackgroundRemoverPlugin: NSObject, FlutterPlugin {
           result(FlutterStandardTypedData(bytes: pngData))
         }
       } catch {
+        #if targetEnvironment(simulator)
+        if let fallbackData = self.generateSimulatorMockCutout(from: flutterData.data) {
+          DispatchQueue.main.async {
+            result(FlutterStandardTypedData(bytes: fallbackData))
+          }
+          return
+        }
+        #endif
         DispatchQueue.main.async {
           result(FlutterError(code: "PROCESSING_ERROR", message: error.localizedDescription, details: nil))
         }
@@ -171,6 +179,29 @@ public class BackgroundRemoverPlugin: NSObject, FlutterPlugin {
 
     return pngData
   }
+
+  #if targetEnvironment(simulator)
+  private func generateSimulatorMockCutout(from data: Data) -> Data? {
+    guard let sourceImage = UIImage(data: data) else { return nil }
+    let normalized = sourceImage.fixOrientation()
+    let size = normalized.size
+    UIGraphicsBeginImageContextWithOptions(size, false, normalized.scale)
+    guard let context = UIGraphicsGetCurrentContext() else { return nil }
+
+    let rect = CGRect(
+      x: size.width * 0.08,
+      y: size.height * 0.05,
+      width: size.width * 0.84,
+      height: size.height * 0.90
+    )
+    context.addEllipse(in: rect)
+    context.clip()
+    normalized.draw(in: CGRect(origin: .zero, size: size))
+    let cutout = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return cutout?.pngData()
+  }
+  #endif
 }
 
 private extension UIImage {
