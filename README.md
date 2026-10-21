@@ -46,6 +46,38 @@ removeBackground(imageBytes: imageBytes).then((Uint8List backgroundRemoveBytes) 
 
 `removeBackground()` is the method that handles the background removal process.
 
+### iOS setup
+
+Background removal uses Google ML Kit's on-device selfie-segmentation model on
+iOS, just as it does on Android. It requires iOS 15.5 or later and adds roughly
+24 MB to the app for the statically linked model. Set the deployment target and
+raise every Pod target in the app's `ios/Podfile`:
+
+```ruby
+platform :ios, '15.5'
+
+require File.expand_path(
+  '.symlinks/plugins/background_remover/ios/scripts/mlkit_apple_silicon_simulator',
+  __dir__,
+)
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
+      config.build_settings['EXCLUDED_ARCHS[sdk=*]'] = 'armv7'
+    end
+  end
+
+  background_remover_mlkit_apple_silicon_simulator_patch(installer)
+end
+```
+
+Then run `flutter clean`, `flutter pub get`, and run the app again. The iOS
+Simulator receives a real segmentation mask; it no longer falls back to an
+oval crop.
+
 ## Contributing
 Contributions to the `background_remover` package are welcome. Please feel free to fork the repository, make changes, and create a pull request to upgrade it.
 

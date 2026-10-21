@@ -7,7 +7,7 @@ Pod::Spec.new do |s|
   s.version          = '0.0.3'
   s.summary          = 'Flutter package that removes background of an image'
   s.description      = <<-DESC
-Flutter package that removes background of an image using Apple Vision framework.
+Flutter package that removes selfie backgrounds with Google ML Kit.
                        DESC
   s.homepage         = 'https://github.com/vinaykumarrock986612/background-remover'
   s.license          = { :file => '../LICENSE' }
@@ -15,10 +15,13 @@ Flutter package that removes background of an image using Apple Vision framework
   s.source           = { :path => '.' }
   s.source_files     = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.platform         = :ios, '15.0'
+  s.dependency 'GoogleMLKit/SegmentationSelfie', '~> 9.0.0'
+  s.platform         = :ios, '15.5'
+  s.ios.deployment_target = '15.5'
+  s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version    = '5.0'
-  s.frameworks       = 'CoreImage', 'Vision', 'UIKit'
+  s.frameworks       = 'CoreImage', 'UIKit'
 end
