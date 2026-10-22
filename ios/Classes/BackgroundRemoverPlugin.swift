@@ -99,7 +99,21 @@ public class BackgroundRemoverPlugin: NSObject, FlutterPlugin {
       throw BackgroundRemoverError.failedToRenderOutput
     }
 
-    guard let pngData = UIImage(cgImage: outputCGImage).pngData() else {
+    var resultImage = UIImage(cgImage: outputCGImage)
+    let maxDimension: CGFloat = 512
+    if resultImage.size.width > maxDimension || resultImage.size.height > maxDimension {
+      let scale = maxDimension / max(resultImage.size.width, resultImage.size.height)
+      let targetSize = CGSize(width: resultImage.size.width * scale, height: resultImage.size.height * scale)
+      let format = UIGraphicsImageRendererFormat()
+      format.scale = 1.0
+      format.opaque = false
+      let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+      resultImage = renderer.image { _ in
+        resultImage.draw(in: CGRect(origin: .zero, size: targetSize))
+      }
+    }
+
+    guard let pngData = resultImage.pngData() else {
       throw BackgroundRemoverError.failedToEncodeOutput
     }
     return pngData
